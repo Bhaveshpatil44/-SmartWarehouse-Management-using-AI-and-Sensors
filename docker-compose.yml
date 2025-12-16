@@ -1,0 +1,59 @@
+version: '3.8'
+
+services:
+  # 1. Message Broker (Redis)
+  redis:
+    image: redis:7-alpine
+    container_name: rat_monitor_redis
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    networks:
+      - rat-monitor-net
+
+  # 2. Database (PostgreSQL) - Required for the Data Logger service later
+  postgres:
+    image: postgres:15-alpine
+    container_name: rat_monitor_postgres
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - rat-monitor-net
+
+  # 3. Application Services (The Video Processor is the first worker)
+  video_processor:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: rat_monitor_video_processor
+    # Give it access to camera device (required for OpenCV to use host webcam)
+    devices:
+      - /dev/video0:/dev/video0 # Adjust if using a different video device/stream
+    env_file:
+      - .env
+    # We will use the `manage.py` script to run the service
+    command: ["python", "manage.py", "start", "video_processor"]
+    depends_on:
+      - redis
+    # When deployed, it might need privileged access for video/hardware
+    # privileged: true
+    networks:
+      - rat-monitor-net
+
+# Define volumes for persistent data
+volumes:
+  redis_data:
+  postgres_data:
+
+# Define the network
+networks:
+  rat-monitor-net:
+    driver: bridge

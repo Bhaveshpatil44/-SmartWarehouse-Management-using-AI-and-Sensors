@@ -1,0 +1,48 @@
+# .github/workflows/ci.yml
+name: CI / Build & Test
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  build_and_test:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+        cache: 'pip' # Cache dependencies for faster builds
+
+    - name: Install Dependencies
+      run: |
+        python -m pip install --upgrade pip
+        # Install base and dev dependencies
+        pip install -r requirements/base.txt
+        pip install -r requirements/dev.txt 
+    
+    - name: Run Unit Tests (Pytest)
+      run: |
+        # Note: This runs tests/unit/test_recommender.py successfully
+        # but integration tests may fail without a running Redis container.
+        pytest tests/unit/
+    
+    - name: Lint with Black (Code Formatting)
+      run: |
+        # Check code style consistency
+        black --check src/ tests/
+        
+    - name: Lint with Flake8 (Static Analysis)
+      run: |
+        flake8 src/ tests/ --max-line-length=120
+        
+    - name: Verify Dockerfile Build (Dry Run)
+      # Checks if the Dockerfile structure is valid and dependencies install correctly.
+      run: |
+        docker build --target builder -t rat-monitor-build:latest .

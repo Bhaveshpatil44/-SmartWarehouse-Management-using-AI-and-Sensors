@@ -1,0 +1,63 @@
+# .github/workflows/docker_build.yml
+name: CD / Build & Push Docker Image
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*' # Optional: Also trigger on version tags like v1.0.0
+
+jobs:
+  build_and_push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write # Necessary to push to ghcr.io
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+      
+    - name: Log in to GitHub Container Registry (GHCR)
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        # The GITHUB_TOKEN has permissions to push to GHCR for the repo owner
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Determine Image Tag and Repository
+      id: meta
+      run: |
+        # Define image repository name (ghcr.io/owner/repo-name)
+        IMAGE_NAME="ghcr.io/${{ github.repository }}"
+        
+        # Use short commit SHA as a tag
+        TAGS="${IMAGE_NAME}:${{ github.sha }}"
+        
+        # If pushing to main branch, also tag as latest
+        if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+          TAGS="${TAGS},${IMAGE_NAME}:latest"
+        fi
+        
+        # If a tag (e.g., v1.0.0) triggered the build, add that tag
+        if [[ "${{ github.ref }}" == "refs/tags/v*" ]]; then
+          TAGS="${TAGS},${IMAGE_NAME}:${{ github.ref_name }}"
+        fi
+        
+        echo "tags=${TAGS}" >> $GITHUB_OUTPUT
+        
+    - name: Build and Push Docker Image
+      uses: docker/build-and-push-action@v5
+      with:
+        context: .
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        # Use the production stage to ensure a small, runtime-optimized image
+        target: production
+        cache-from: type=gha
+        cache-to: type=gha,mode=max

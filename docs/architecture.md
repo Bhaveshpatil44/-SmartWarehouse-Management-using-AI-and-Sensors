@@ -1,4 +1,4 @@
-# 🐀 System Architecture: Warehouse Rat Monitoring and Mitigation
+# 🐀 System Architecture: Warehouse Rat Monitoring and Migratrion
 
 This system uses a decoupled microservice architecture to scale from simple detection to a real-time recommendation engine. Communication between all services is asynchronous via a Redis Message Broker (Pub/Sub).
 
@@ -20,3 +20,4 @@ This system uses a decoupled microservice architecture to scale from simple dete
 | **Recommender** | Python, FastAPI, LLM (OpenAI/Gemini) | `rat_detections` | `full_alerts` |
 | **Alerter** | Python, Twilio, FastAPI | `full_alerts` | N/A (External Action) |
 | **Infrastructure** | Redis, PostgreSQL | N/A | N/A |
+

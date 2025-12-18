@@ -88,3 +88,4 @@ To stop and remove all running containers defined in the `docker-compose.yml` fi
 
 ```bash
 docker-compose down
+

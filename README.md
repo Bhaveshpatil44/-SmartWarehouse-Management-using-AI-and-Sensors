@@ -22,7 +22,7 @@ The system is built as a set of decoupled services communicating via a message q
 ### Prerequisites
 1.  Docker and Docker Compose
 2.  Python 3.11+
-3.  Valid API keys (Twilio, Roboflow, OpenAI/Gemini)
+3.  Valid API keys (Twilio, Roboflow, OpenAI/Gemini, Ollama  fro Local Use)
 
 ### 1. Configure Environment
 Copy and populate the environment variables:

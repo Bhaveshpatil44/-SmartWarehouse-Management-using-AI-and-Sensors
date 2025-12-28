@@ -1,6 +1,4 @@
-# Ignore Visual Studio files
-.vs/
-*.vsidx
+
 
 # Python cache
 __pycache__/
